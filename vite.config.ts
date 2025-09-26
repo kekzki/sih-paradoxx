@@ -4,7 +4,7 @@ import * as path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: "/paradoxx-sih",
+  base: "/paradoxx-sih/",
   resolve: {
     extensions: [".js", ".jsx", ".ts", ".tsx", ".json"],
     alias: {
