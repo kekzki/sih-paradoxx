@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ExternalLink, Database, Clock, BarChart } from "lucide-react";
 
 const dataSources = [
@@ -115,6 +115,9 @@ export function DataSourcesSection() {
                 <span className="text-2xl">{selectedSource?.logo}</span>
                 {selectedSource?.name}
               </DialogTitle>
+              <DialogDescription>
+                Detailed information about this data source and its API access methods.
+              </DialogDescription>
             </DialogHeader>
             
             {selectedSource && (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -52,6 +52,9 @@ export function LoginModal({ isOpen, onClose, onLogin }: LoginModalProps) {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl text-center text-[#1e3a8a]">Access AquaCore</DialogTitle>
+          <DialogDescription className="text-center text-gray-600">
+            Sign in to access advanced features or register for a new account to contribute to marine research.
+          </DialogDescription>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Waves, User, Menu, X } from "lucide-react";
+import { Waves, Menu, X } from "lucide-react";
 
 interface HeaderProps {
   onOpenLoginModal: () => void;
@@ -12,9 +8,13 @@ interface HeaderProps {
   userRole: 'guest' | 'researcher' | 'admin' | null;
   userName?: string;
   onLogout: () => void;
+  onNavigateToDataUpload: () => void;
+  onNavigateToHome: () => void;
+  onNavigateToSearchVisualization: () => void;
+  currentPage: 'home' | 'data-upload' | 'search-visualization';
 }
 
-export function Header({ onOpenLoginModal, isLoggedIn, userRole, userName, onLogout }: HeaderProps) {
+export function Header({ onOpenLoginModal, isLoggedIn, userRole, userName, onLogout, onNavigateToDataUpload, onNavigateToHome, onNavigateToSearchVisualization, currentPage }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const canAccessDataUpload = isLoggedIn && (userRole === 'researcher' || userRole === 'admin');
@@ -34,11 +34,26 @@ export function Header({ onOpenLoginModal, isLoggedIn, userRole, userName, onLog
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#home" className="hover:text-[#06b6d4] transition-colors">Home</a>
-            <a href="#search" className="hover:text-[#06b6d4] transition-colors">Search & Visualization</a>
+            <button 
+              onClick={onNavigateToHome} 
+              className={`hover:text-[#06b6d4] transition-colors ${currentPage === 'home' ? 'text-[#06b6d4]' : ''}`}
+            >
+              Home
+            </button>
+            <button 
+              onClick={onNavigateToSearchVisualization} 
+              className={`hover:text-[#06b6d4] transition-colors ${currentPage === 'search-visualization' ? 'text-[#06b6d4]' : ''}`}
+            >
+              Search & Visualization
+            </button>
             <a href="#analysis" className="hover:text-[#06b6d4] transition-colors">Analysis</a>
             {canAccessDataUpload && (
-              <a href="#upload" className="hover:text-[#06b6d4] transition-colors">Data Upload</a>
+              <button 
+                onClick={onNavigateToDataUpload} 
+                className={`hover:text-[#06b6d4] transition-colors ${currentPage === 'data-upload' ? 'text-[#06b6d4]' : ''}`}
+              >
+                Data Upload
+              </button>
             )}
             
             {isLoggedIn ? (
@@ -76,11 +91,26 @@ export function Header({ onOpenLoginModal, isLoggedIn, userRole, userName, onLog
         {isMobileMenuOpen && (
           <div className="md:hidden pb-4">
             <nav className="flex flex-col space-y-4">
-              <a href="#home" className="hover:text-[#06b6d4] transition-colors">Home</a>
-              <a href="#search" className="hover:text-[#06b6d4] transition-colors">Search & Visualization</a>
+              <button 
+                onClick={() => { onNavigateToHome(); setIsMobileMenuOpen(false); }} 
+                className={`hover:text-[#06b6d4] transition-colors text-left ${currentPage === 'home' ? 'text-[#06b6d4]' : ''}`}
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => { onNavigateToSearchVisualization(); setIsMobileMenuOpen(false); }} 
+                className={`hover:text-[#06b6d4] transition-colors text-left ${currentPage === 'search-visualization' ? 'text-[#06b6d4]' : ''}`}
+              >
+                Search & Visualization
+              </button>
               <a href="#analysis" className="hover:text-[#06b6d4] transition-colors">Analysis</a>
               {canAccessDataUpload && (
-                <a href="#upload" className="hover:text-[#06b6d4] transition-colors">Data Upload</a>
+                <button 
+                  onClick={() => { onNavigateToDataUpload(); setIsMobileMenuOpen(false); }} 
+                  className={`hover:text-[#06b6d4] transition-colors text-left ${currentPage === 'data-upload' ? 'text-[#06b6d4]' : ''}`}
+                >
+                  Data Upload
+                </button>
               )}
               
               {isLoggedIn ? (
