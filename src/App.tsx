@@ -7,7 +7,7 @@ import { DataSourcesSection } from "./components/DataSourcesSection";
 import { Footer } from "./components/Footer";
 import { LoginModal } from "./components/LoginModal";
 import { DataUploadPage } from "./components/DataUploadPage";
-import { SearchVisualizationPage } from "./components/SearchVisualizationPage";
+import  SearchVisualizationPage  from "./components/SearchVisualizationPage";
 
 type UserRole = "guest" | "researcher" | "admin" | null;
 type CurrentPage =

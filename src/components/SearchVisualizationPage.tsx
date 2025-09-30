@@ -1,24 +1,13 @@
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Badge } from "./ui/badge";
-import { Separator } from "./ui/separator";
-import { 
-  Search, 
-  BarChart3, 
-  Upload, 
-  FileImage, 
-  FileText,
-  Database,
-  Dna,
-  Download,
-  TrendingUp,
-  Activity,
-  Sliders
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Search, BarChart3, Upload, FileImage, FileText, Database, Dna, Download, TrendingUp, Activity, Sliders } from "lucide-react";
+import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, ResponsiveContainer } from "recharts";
 
 interface User {
   email: string;
@@ -33,25 +22,60 @@ interface SearchVisualizationPageProps {
 type PageMode = 'search' | 'visualization';
 type DataSource = 'uploaded' | 'platform' | 'select';
 
-export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) {
+const speciesData = [
+  { name: "Hilsa", count: 120 },
+  { name: "Mackerel", count: 90 },
+  { name: "Pomfret", count: 70 },
+  { name: "Kingfish", count: 45 },
+];
+
+const biomassData = [
+  { month: "Jan", biomass: 1000 },
+  { month: "Feb", biomass: 1100 },
+  { month: "Mar", biomass: 950 },
+  { month: "Apr", biomass: 1150 },
+  { month: "May", biomass: 1300 },
+  { month: "Jun", biomass: 1250 },
+];
+
+const trendsData = [
+  { year: 2020, value: 500 },
+  { year: 2021, value: 650 },
+  { year: 2022, value: 700 },
+  { year: 2023, value: 850 },
+  { year: 2024, value: 920 },
+];
+
+const locationData = [
+  { location: "Bay of Bengal", density: 80 },
+  { location: "Arabian Sea", density: 60 },
+  { location: "Kerala", density: 45 },
+  { location: "Tamil Nadu", density: 70 },
+];
+
+const comparisonData = [
+  { param: "10°C", hilsa: 30, mackerel: 45 },
+  { param: "15°C", hilsa: 55, mackerel: 70 },
+  { param: "20°C", hilsa: 85, mackerel: 90 },
+  { param: "25°C", hilsa: 75, mackerel: 65 },
+  { param: "30°C", hilsa: 40, mackerel: 35 },
+];
+
+const COLORS = ["#06b6d4", "#0891b2", "#0e7490", "#155e75"];
+
+export default function SearchVisualizationPage({ user }: SearchVisualizationPageProps) {
   const [pageMode, setPageMode] = useState<PageMode>('search');
   const [dataSource, setDataSource] = useState<DataSource>('platform');
-  
-  // Search filters
   const [searchType, setSearchType] = useState<string>('');
   const [otolithType, setOtolithType] = useState<string>('');
   const [taxonomyType, setTaxonomyType] = useState<string>('');
   const [location, setLocation] = useState<string>('');
   const [timeFilter, setTimeFilter] = useState<string>('');
-  
-  // Visualization filters
   const [visualizationType, setVisualizationType] = useState<string>('');
   const [simulationType, setSimulationType] = useState<string>('');
   const [ecologyType, setEcologyType] = useState<string>('');
   const [speciesType, setSpeciesType] = useState<string>('');
   const [graphType, setGraphType] = useState<string>('');
-  
-  // Form data
   const [searchQuery, setSearchQuery] = useState('');
   const [visualizeQuery, setVisualizeQuery] = useState('');
   const [otolithUploadedFile, setOtolithUploadedFile] = useState<File | null>(null);
@@ -61,29 +85,17 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
   const [selectedFamily, setSelectedFamily] = useState<string>('');
   const [parameter1, setParameter1] = useState<string>('');
   const [parameter2, setParameter2] = useState<string>('');
+  const [tempValue, setTempValue] = useState(15);
+  const [salinityValue, setSalinityValue] = useState(35);
+  const [phValue, setPhValue] = useState(8.1);
+  const [oxygenValue, setOxygenValue] = useState(7.5);
 
-  const handleOtolithFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setOtolithUploadedFile(file);
-    }
-  };
-
-  const handleEdnaFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setEdnaUploadedFile(file);
-    }
-  };
-
-  const triggerImageFileUpload = () => {
-    const fileInput = document.getElementById('image-upload') as HTMLInputElement;
-    fileInput?.click();
-  };
-
-  const triggerSequenceFileUpload = () => {
-    const fileInput = document.getElementById('sequence-upload') as HTMLInputElement;
-    fileInput?.click();
+  const calculateSurvival = () => {
+    const tempScore = Math.max(0, 100 - Math.abs(tempValue - 25) * 2);
+    const salinityScore = Math.max(0, 100 - Math.abs(salinityValue - 35) * 1.5);
+    const phScore = Math.max(0, 100 - Math.abs(phValue - 8.1) * 10);
+    const oxygenScore = Math.min(100, Math.max(0, (oxygenValue / 8) * 100));
+    return ((tempScore + salinityScore + phScore + oxygenScore) / 4).toFixed(1);
   };
 
   const resetFilters = () => {
@@ -101,10 +113,11 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
     setEdnaUploadedFile(null);
     setSearchQuery('');
     setVisualizeQuery('');
+    setParameter1('');
+    setParameter2('');
   };
 
   const renderSearchContent = () => {
-    // Default search interface when no specific type is selected
     if (!searchType) {
       return (
         <Card className="max-w-4xl mx-auto">
@@ -114,24 +127,19 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
               <h3 className="text-2xl text-gray-900">Search:</h3>
             </div>
             <div className="relative max-w-2xl mx-auto">
-              <Input
-                placeholder="Enter what you want to search for (e.g., fish species, location, data type)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="text-lg p-6 pr-16 border-2 border-gray-200 focus:border-[#06b6d4] rounded-xl"
+              <Input 
+                placeholder="Enter what you want to search for..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+                className="text-lg p-6 pr-16 border-2 border-gray-200 focus:border-[#06b6d4] rounded-xl" 
               />
-              <Button 
-                className="absolute right-3 top-3 bg-[#06b6d4] hover:bg-[#0891b2] rounded-lg"
-                size="sm"
-              >
+              <Button className="absolute right-3 top-3 bg-[#06b6d4] hover:bg-[#0891b2] rounded-lg" size="sm">
                 <Search className="h-4 w-4" />
               </Button>
             </div>
             {searchQuery && (
               <div className="mt-8 p-6 bg-blue-50 rounded-xl max-w-2xl mx-auto">
-                <p className="text-sm text-gray-600 text-center">
-                  💡 For more specific searches, use the filters on the left to select search type (Otolith, Taxonomy, eDNA)
-                </p>
+                <p className="text-sm text-gray-600 text-center">For more specific searches, use the filters on the left</p>
               </div>
             )}
           </div>
@@ -149,23 +157,23 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                   <Upload className="h-12 w-12 text-[#06b6d4]" />
                 </div>
                 <h3 className="text-xl mb-3 text-gray-900">Upload Otolith Image</h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Upload an otolith image for AI-powered fish species identification using our advanced machine learning models
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleOtolithFileUpload}
-                  className="hidden"
-                  id="image-upload"
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">Upload an otolith image for AI-powered fish species identification</p>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => { 
+                    const f = e.target.files?.[0]; 
+                    if (f) setOtolithUploadedFile(f); 
+                  }} 
+                  className="hidden" 
+                  id="image-upload" 
                 />
                 <Button 
                   size="lg" 
-                  className="bg-[#06b6d4] hover:bg-[#0891b2] text-white cursor-pointer"
-                  onClick={triggerImageFileUpload}
+                  className="bg-[#06b6d4] hover:bg-[#0891b2] text-white" 
+                  onClick={() => document.getElementById('image-upload')?.click()}
                 >
-                  <FileImage className="h-5 w-5 mr-2" />
-                  Choose Image File
+                  <FileImage className="h-5 w-5 mr-2" />Choose Image File
                 </Button>
               </div>
             </Card>
@@ -177,31 +185,28 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                   <div className="flex items-center space-x-3">
                     <Button 
                       variant="outline" 
-                      onClick={() => setOtolithUploadedFile(null)}
-                      className="text-[#06b6d4] border-[#06b6d4] hover:bg-[#06b6d4] hover:text-white"
+                      onClick={() => setOtolithUploadedFile(null)} 
+                      className="text-[#06b6d4] border-[#06b6d4]"
                     >
-                      Upload New Image
+                      Upload New
                     </Button>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Analysis Complete
-                    </Badge>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">Complete</Badge>
                   </div>
                 </div>
                 <div className="overflow-hidden rounded-lg border">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">ID</th>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">Name</th>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">Confidence</th>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">Action</th>
+                        {['ID', 'Name', 'Confidence', 'Action'].map(header => (
+                          <th key={header} className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">{header}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {[
-                        { id: 'OTO001', name: 'Hilsa Fish (Tenualosa ilisha)', confidence: '94.2%' },
-                        { id: 'OTO002', name: 'Indian Mackerel (Rastrelliger kanagurta)', confidence: '87.8%' },
-                        { id: 'OTO003', name: 'Pomfret (Pampus argenteus)', confidence: '82.1%' }
+                        { id: 'OTO001', name: 'Hilsa Fish', confidence: 94.2 },
+                        { id: 'OTO002', name: 'Indian Mackerel', confidence: 87.8 },
+                        { id: 'OTO003', name: 'Pomfret', confidence: 82.1 }
                       ].map((result, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">{result.id}</td>
@@ -209,25 +214,13 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                           <td className="px-6 py-4">
                             <Badge 
                               variant="secondary" 
-                              className={`${
-                                parseFloat(result.confidence) > 90 
-                                  ? 'bg-green-100 text-green-800'
-                                  : parseFloat(result.confidence) > 80
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}
+                              className={result.confidence > 90 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
                             >
-                              {result.confidence}
+                              {result.confidence}%
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="text-[#06b6d4] border-[#06b6d4] hover:bg-[#06b6d4] hover:text-white"
-                            >
-                              View Details
-                            </Button>
+                            <Button variant="outline" size="sm" className="text-[#06b6d4] border-[#06b6d4]">View</Button>
                           </td>
                         </tr>
                       ))}
@@ -250,25 +243,19 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                 <FileText className="h-6 w-6 mr-3 text-[#06b6d4]" />
                 <h3 className="text-xl text-gray-900">Search by Fish Name</h3>
               </div>
-              <div className="space-y-4">
-                <div className="relative">
-                  <Input
-                    placeholder="Enter fish species name (e.g., Hilsa, Mackerel, Pomfret)..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="text-lg p-4 pr-16 border-2 border-gray-200 focus:border-[#06b6d4]"
-                  />
-                  <Button 
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[#06b6d4] hover:bg-[#0891b2] rounded-lg"
-                    size="sm"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div className="relative">
+                <Input 
+                  placeholder="Enter fish species name..." 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  className="text-lg p-4 pr-16" 
+                />
+                <Button className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[#06b6d4]" size="sm">
+                  <Search className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </Card>
-          
           {searchQuery && (
             <Card>
               <div className="p-6">
@@ -276,18 +263,15 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                 <div className="grid gap-4">
                   {[
                     { name: 'Hilsa Fish', scientific: 'Tenualosa ilisha', location: 'Bay of Bengal' },
-                    { name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', location: 'Arabian Sea' },
-                    { name: 'Silver Pomfret', scientific: 'Pampus argenteus', location: 'Indian Ocean' }
+                    { name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', location: 'Arabian Sea' }
                   ].map((fish, index) => (
-                    <div key={index} className="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <div key={index} className="flex items-center p-4 border rounded-lg hover:bg-gray-50">
                       <div className="flex-1">
                         <h4 className="text-base mb-1 text-gray-900">{fish.name}</h4>
-                        <p className="text-sm text-gray-600 mb-1">Scientific: {fish.scientific}</p>
+                        <p className="text-sm text-gray-600">Scientific: {fish.scientific}</p>
                         <p className="text-sm text-gray-600">Location: {fish.location}</p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
+                      <Button variant="outline" size="sm">View</Button>
                     </div>
                   ))}
                 </div>
@@ -308,48 +292,60 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                 <h3 className="text-xl text-gray-900">Search by Species</h3>
               </div>
               <div className="relative">
-                <Input
-                  placeholder="Enter species or scientific name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="text-lg p-4 pr-16 border-2 border-gray-200 focus:border-[#06b6d4]"
+                <Input 
+                  placeholder="Enter species name..." 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  className="text-lg p-4 pr-16" 
                 />
-                <Button 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[#06b6d4] hover:bg-[#0891b2] rounded-lg"
-                  size="sm"
-                >
+                <Button className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-[#06b6d4]" size="sm">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </Card>
-
           {searchQuery && (
             <Card>
               <div className="p-6">
                 <h3 className="text-xl mb-4 text-gray-900">Species Details</h3>
-                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg">
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg mb-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <h4 className="text-lg mb-3 text-gray-900">Hilsa Fish</h4>
                       <div className="space-y-2 text-sm">
-                        <p><span className="text-gray-600">Scientific Name:</span> Tenualosa ilisha</p>
+                        <p><span className="text-gray-600">Scientific:</span> Tenualosa ilisha</p>
                         <p><span className="text-gray-600">Family:</span> Clupeidae</p>
-                        <p><span className="text-gray-600">Order:</span> Clupeiformes</p>
-                        <p><span className="text-gray-600">Class:</span> Actinopterygii</p>
                       </div>
                     </div>
                     <div>
                       <h4 className="text-lg mb-3 text-gray-900">Distribution</h4>
                       <div className="space-y-2 text-sm">
-                        <p><span className="text-gray-600">Primary Habitat:</span> Bay of Bengal</p>
-                        <p><span className="text-gray-600">Migration:</span> Anadromous</p>
-                        <p><span className="text-gray-600">Depth Range:</span> 0-200m</p>
+                        <p><span className="text-gray-600">Habitat:</span> Bay of Bengal</p>
                         <p><span className="text-gray-600">Status:</span> Commercial</p>
                       </div>
                     </div>
                   </div>
                 </div>
+                <h4 className="text-lg mb-4 text-gray-900">Species Distribution</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie 
+                      data={speciesData} 
+                      dataKey="count" 
+                      nameKey="name" 
+                      cx="50%" 
+                      cy="50%" 
+                      outerRadius={100} 
+                      label
+                    >
+                      {speciesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </Card>
           )}
@@ -367,84 +363,57 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                 <h3 className="text-xl text-gray-900">Search by Classification</h3>
               </div>
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="mb-3 block">Class</Label>
-                  <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select class..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="actinopterygii">Actinopterygii</SelectItem>
-                      <SelectItem value="chondrichthyes">Chondrichthyes</SelectItem>
-                      <SelectItem value="mammalia">Mammalia</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="mb-3 block">Order</Label>
-                  <Select value={selectedOrder} onValueChange={setSelectedOrder}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select order..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="perciformes">Perciformes</SelectItem>
-                      <SelectItem value="clupeiformes">Clupeiformes</SelectItem>
-                      <SelectItem value="gadiformes">Gadiformes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="mb-3 block">Family</Label>
-                  <Select value={selectedFamily} onValueChange={setSelectedFamily}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select family..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scombridae">Scombridae</SelectItem>
-                      <SelectItem value="clupeidae">Clupeidae</SelectItem>
-                      <SelectItem value="stromateidae">Stromateidae</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {[
+                  { label: 'Class', value: selectedClass, setter: setSelectedClass, opts: ['actinopterygii', 'chondrichthyes'] },
+                  { label: 'Order', value: selectedOrder, setter: setSelectedOrder, opts: ['perciformes', 'clupeiformes'] },
+                  { label: 'Family', value: selectedFamily, setter: setSelectedFamily, opts: ['scombridae', 'clupeidae'] }
+                ].map((selectConfig, index) => (
+                  <div key={index}>
+                    <Label className="mb-3 block">{selectConfig.label}</Label>
+                    <Select value={selectConfig.value} onValueChange={selectConfig.setter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectConfig.opts.map(option => (
+                          <SelectItem key={option} value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
               </div>
             </div>
           </Card>
-
           {(selectedClass || selectedOrder || selectedFamily) && (
             <>
               <Card>
                 <div className="p-6">
-                  <h3 className="text-xl mb-6 text-gray-900">Statistics Overview</h3>
+                  <h3 className="text-xl mb-6 text-gray-900">Statistics</h3>
                   <div className="grid grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
-                      <div className="text-3xl text-[#1e3a8a] mb-2">2,847</div>
-                      <div className="text-sm text-gray-600">Total Records</div>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
-                      <div className="text-3xl text-[#1e3a8a] mb-2">156</div>
-                      <div className="text-sm text-gray-600">Species Found</div>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
-                      <div className="text-3xl text-[#1e3a8a] mb-2">23</div>
-                      <div className="text-sm text-gray-600">Families</div>
-                    </div>
-                    <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
-                      <div className="text-3xl text-[#1e3a8a] mb-2">8</div>
-                      <div className="text-sm text-gray-600">Orders</div>
-                    </div>
+                    {[
+                      { value: '2,847', label: 'Total Records' },
+                      { value: '156', label: 'Species' },
+                      { value: '23', label: 'Families' },
+                      { value: '8', label: 'Orders' }
+                    ].map((stat, index) => (
+                      <div key={index} className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
+                        <div className="text-3xl text-[#1e3a8a] mb-2">{stat.value}</div>
+                        <div className="text-sm text-gray-600">{stat.label}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </Card>
-
               <Card>
                 <div className="p-6">
                   <h3 className="text-xl mb-6 text-gray-900">Matching Records</h3>
                   <div className="space-y-3">
                     {[
                       { name: 'Hilsa Fish', scientific: 'Tenualosa ilisha', records: 45 },
-                      { name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', records: 38 },
-                      { name: 'Silver Pomfret', scientific: 'Pampus argenteus', records: 29 },
-                      { name: 'King Fish', scientific: 'Scomberomorus commerson', records: 22 }
+                      { name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', records: 38 }
                     ].map((species, index) => (
                       <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                         <div>
@@ -476,23 +445,23 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                   <Dna className="h-12 w-12 text-[#06b6d4]" />
                 </div>
                 <h3 className="text-xl mb-3 text-gray-900">Upload eDNA Sequence</h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Upload your environmental DNA sequence file (FASTA format) for species identification and biodiversity analysis
-                </p>
-                <input
-                  type="file"
-                  accept=".fasta,.fastq,.txt,.fa"
-                  onChange={handleEdnaFileUpload}
-                  className="hidden"
-                  id="sequence-upload"
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">Upload your DNA sequence file</p>
+                <input 
+                  type="file" 
+                  accept=".fasta,.fastq,.txt,.fa" 
+                  onChange={(e) => { 
+                    const f = e.target.files?.[0]; 
+                    if (f) setEdnaUploadedFile(f); 
+                  }} 
+                  className="hidden" 
+                  id="sequence-upload" 
                 />
                 <Button 
                   size="lg" 
-                  className="bg-[#06b6d4] hover:bg-[#0891b2] text-white cursor-pointer"
-                  onClick={triggerSequenceFileUpload}
+                  className="bg-[#06b6d4] hover:bg-[#0891b2] text-white" 
+                  onClick={() => document.getElementById('sequence-upload')?.click()}
                 >
-                  <Dna className="h-5 w-5 mr-2" />
-                  Choose FASTA File
+                  <Dna className="h-5 w-5 mr-2" />Choose File
                 </Button>
               </div>
             </Card>
@@ -500,59 +469,42 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
             <Card>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl text-gray-900">eDNA Analysis Results</h3>
+                  <h3 className="text-xl text-gray-900">eDNA Results</h3>
                   <div className="flex items-center space-x-3">
                     <Button 
                       variant="outline" 
-                      onClick={() => setEdnaUploadedFile(null)}
-                      className="text-[#06b6d4] border-[#06b6d4] hover:bg-[#06b6d4] hover:text-white"
+                      onClick={() => setEdnaUploadedFile(null)} 
+                      className="text-[#06b6d4] border-[#06b6d4]"
                     >
-                      Upload New Sequence
+                      Upload New
                     </Button>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Processing Complete
-                    </Badge>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">Complete</Badge>
                   </div>
                 </div>
                 <div className="overflow-hidden rounded-lg border">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">ID</th>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">Species</th>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">Confidence</th>
-                        <th className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">Action</th>
+                        {['ID', 'Species', 'Confidence', 'Action'].map(header => (
+                          <th key={header} className="px-6 py-3 text-left text-xs uppercase text-gray-500">{header}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {[
-                        { id: 'DNA001', name: 'Tenualosa ilisha', confidence: '96.8%' },
-                        { id: 'DNA002', name: 'Rastrelliger kanagurta', confidence: '91.4%' },
-                        { id: 'DNA003', name: 'Pampus argenteus', confidence: '85.7%' }
+                        { id: 'DNA001', name: 'Tenualosa ilisha', confidence: 96.8 },
+                        { id: 'DNA002', name: 'Rastrelliger kanagurta', confidence: 91.4 }
                       ].map((result, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">{result.id}</td>
                           <td className="px-6 py-4 text-sm text-gray-900">{result.name}</td>
                           <td className="px-6 py-4">
-                            <Badge 
-                              variant="secondary" 
-                              className={`${
-                                parseFloat(result.confidence) > 90 
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}
-                            >
-                              {result.confidence}
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              {result.confidence}%
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="text-[#06b6d4] border-[#06b6d4] hover:bg-[#06b6d4] hover:text-white"
-                            >
-                              View Details
-                            </Button>
+                            <Button variant="outline" size="sm" className="text-[#06b6d4] border-[#06b6d4]">View</Button>
                           </td>
                         </tr>
                       ))}
@@ -570,7 +522,6 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
   };
 
   const renderVisualizationContent = () => {
-    // Default visualization interface when no specific type is selected
     if (!visualizationType) {
       return (
         <Card className="max-w-4xl mx-auto">
@@ -580,24 +531,19 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
               <h3 className="text-2xl text-gray-900">Visualise:</h3>
             </div>
             <div className="relative max-w-2xl mx-auto">
-              <Input
-                placeholder="Enter what you want to visualize (e.g., temperature trends, species distribution, parameter relationships)..."
-                value={visualizeQuery}
-                onChange={(e) => setVisualizeQuery(e.target.value)}
-                className="text-lg p-6 pr-16 border-2 border-gray-200 focus:border-[#06b6d4] rounded-xl"
+              <Input 
+                placeholder="Enter what you want to visualize..." 
+                value={visualizeQuery} 
+                onChange={(e) => setVisualizeQuery(e.target.value)} 
+                className="text-lg p-6 pr-16 border-2 rounded-xl" 
               />
-              <Button 
-                className="absolute right-3 top-3 bg-[#06b6d4] hover:bg-[#0891b2] rounded-lg"
-                size="sm"
-              >
+              <Button className="absolute right-3 top-3 bg-[#06b6d4] hover:bg-[#0891b2] rounded-lg" size="sm">
                 <BarChart3 className="h-4 w-4" />
               </Button>
             </div>
             {visualizeQuery && (
               <div className="mt-8 p-6 bg-blue-50 rounded-xl max-w-2xl mx-auto">
-                <p className="text-sm text-gray-600 text-center">
-                  💡 For advanced visualizations, use the filters on the left to select visualization type (Simulation, Ecology, Species-Specific)
-                </p>
+                <p className="text-sm text-gray-600 text-center">For advanced visualizations, use the filters</p>
               </div>
             )}
           </div>
@@ -612,100 +558,56 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
                 <Sliders className="h-6 w-6 mr-3 text-[#06b6d4]" />
-                <h3 className="text-xl text-gray-900">Predictive Visualization Controls</h3>
+                <h3 className="text-xl text-gray-900">Predictive Visualization</h3>
               </div>
               <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Data
+                <Download className="h-4 w-4 mr-2" />Export
               </Button>
             </div>
-            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between mb-3">
-                    <Label>Temperature (°C)</Label>
-                    <span className="text-sm text-gray-600">15°C</span>
+                {[
+                  { label: 'Temperature (°C)', value: tempValue, setter: setTempValue, min: -5, max: 35 },
+                  { label: 'Salinity (ppt)', value: salinityValue, setter: setSalinityValue, min: 0, max: 45 },
+                  { label: 'pH Level', value: phValue, setter: setPhValue, min: 6, max: 9 },
+                  { label: 'Oxygen (mg/L)', value: oxygenValue, setter: setOxygenValue, min: 0, max: 15 }
+                ].map((param, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between mb-3">
+                      <Label>{param.label}</Label>
+                      <span className="text-sm text-gray-600">{param.value.toFixed(1)}</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={param.min} 
+                      max={param.max} 
+                      step="0.1" 
+                      value={param.value} 
+                      onChange={(e) => param.setter(parseFloat(e.target.value))} 
+                      className="w-full h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-lg appearance-none cursor-pointer" 
+                    />
                   </div>
-                  <input
-                    type="range"
-                    min="-5"
-                    max="35"
-                    defaultValue="15"
-                    className="w-full h-3 bg-gradient-to-r from-blue-400 to-red-400 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Arctic (-5°C)</span>
-                    <span>Tropical (35°C)</span>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between mb-3">
-                    <Label>Salinity (ppt)</Label>
-                    <span className="text-sm text-gray-600">35 ppt</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="45"
-                    defaultValue="35"
-                    className="w-full h-3 bg-gradient-to-r from-green-400 to-blue-400 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Freshwater (0 ppt)</span>
-                    <span>Hypersaline (45 ppt)</span>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between mb-3">
-                    <Label>pH Level</Label>
-                    <span className="text-sm text-gray-600">8.1</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="6"
-                    max="9"
-                    step="0.1"
-                    defaultValue="8.1"
-                    className="w-full h-3 bg-gradient-to-r from-red-400 to-green-400 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Acidic (6.0)</span>
-                    <span>Alkaline (9.0)</span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between mb-3">
-                    <Label>Oxygen Level (mg/L)</Label>
-                    <span className="text-sm text-gray-600">7.5 mg/L</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="15"
-                    step="0.5"
-                    defaultValue="7.5"
-                    className="w-full h-3 bg-gradient-to-r from-red-400 to-cyan-400 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Hypoxic (0 mg/L)</span>
-                    <span>Supersaturated (15 mg/L)</span>
-                  </div>
-                </div>
+                ))}
               </div>
-              
-              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6 flex items-center justify-center min-h-80">
-                <div className="text-center">
-                  <TrendingUp className="h-20 w-20 text-[#06b6d4] mx-auto mb-4" />
-                  <h4 className="text-lg mb-2 text-gray-900">Real-time Prediction Graph</h4>
-                  <p className="text-gray-600 mb-4">Species survival probability based on environmental parameters</p>
-                  <div className="bg-white rounded p-4 inline-block">
-                    <span className="text-2xl text-green-600">87.4%</span>
-                    <p className="text-sm text-gray-600">Predicted Survival Rate</p>
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6 flex flex-col items-center justify-center">
+                <div className="text-center mb-6">
+                  <TrendingUp className="h-16 w-16 text-[#06b6d4] mx-auto mb-4" />
+                  <h4 className="text-lg mb-2 text-gray-900">Survival Prediction</h4>
+                </div>
+                <div className="bg-white rounded p-6 w-full max-w-sm">
+                  <div className="text-center">
+                    <span className="text-4xl text-green-600">{calculateSurvival()}%</span>
+                    <p className="text-sm text-gray-600 mt-2">Predicted Survival Rate</p>
                   </div>
+                  <ResponsiveContainer width="100%" height={150} className="mt-4">
+                    <LineChart data={biomassData.slice(0, 4)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis hide />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="biomass" stroke="#06b6d4" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
@@ -721,73 +623,28 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
                 <Activity className="h-6 w-6 mr-3 text-[#06b6d4]" />
-                <h3 className="text-xl text-gray-900">Species Comparison Analysis</h3>
+                <h3 className="text-xl text-gray-900">Species Comparison</h3>
               </div>
               <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Chart
+                <Download className="h-4 w-4 mr-2" />Export
               </Button>
             </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <div>
-                <Label className="mb-3 block">Constant Variable</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select constant..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="temperature">Temperature</SelectItem>
-                    <SelectItem value="salinity">Salinity</SelectItem>
-                    <SelectItem value="ph">pH Level</SelectItem>
-                    <SelectItem value="oxygen">Oxygen Level</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label className="mb-3 block">Variable Parameter</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select variable..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="salinity">Salinity</SelectItem>
-                    <SelectItem value="temperature">Temperature</SelectItem>
-                    <SelectItem value="ph">pH Level</SelectItem>
-                    <SelectItem value="depth">Depth</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label className="mb-3 block">Species to Compare</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select species..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hilsa">Hilsa vs Mackerel</SelectItem>
-                    <SelectItem value="pomfret">Pomfret vs Kingfish</SelectItem>
-                    <SelectItem value="all">All Major Species</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-8 flex items-center justify-center min-h-96">
-              <div className="text-center">
-                <BarChart3 className="h-24 w-24 text-[#06b6d4] mx-auto mb-4" />
-                <h4 className="text-lg mb-2 text-gray-900">Comparative Analysis Chart</h4>
-                <p className="text-gray-600">Configure parameters above to generate species comparison visualization</p>
-              </div>
-            </div>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={comparisonData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="param" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="hilsa" fill="#06b6d4" name="Hilsa" />
+                <Bar dataKey="mackerel" fill="#0891b2" name="Mackerel" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </Card>
       );
     }
 
-    // Ecology visualizations
     if (visualizationType === 'ecology') {
       if (!ecologyType) {
         return (
@@ -795,9 +652,9 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
             <div className="p-8">
               <div className="flex items-center mb-6">
                 <Activity className="h-6 w-6 mr-3 text-[#06b6d4]" />
-                <h3 className="text-xl text-gray-900">Ecological Parameter Analysis</h3>
+                <h3 className="text-xl text-gray-900">Ecological Analysis</h3>
               </div>
-              <p className="text-gray-600">Select an analysis type from the filters to view ecological data visualizations.</p>
+              <p className="text-gray-600">Select an analysis type from the filters</p>
             </div>
           </Card>
         );
@@ -810,88 +667,80 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
                   <Activity className="h-6 w-6 mr-3 text-[#06b6d4]" />
-                  <h3 className="text-xl text-gray-900">{parameter1.charAt(0).toUpperCase() + parameter1.slice(1)} vs {parameter2.charAt(0).toUpperCase() + parameter2.slice(1)}</h3>
+                  <h3 className="text-xl text-gray-900">{parameter1} vs {parameter2}</h3>
                 </div>
                 <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Chart
+                  <Download className="h-4 w-4 mr-2" />Export
                 </Button>
               </div>
-              
-              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-8 flex items-center justify-center min-h-96">
-                <div className="text-center">
-                  <BarChart3 className="h-24 w-24 text-[#06b6d4] mx-auto mb-4" />
-                  <h4 className="text-lg mb-2 text-gray-900">Parameter Correlation Analysis</h4>
-                  <p className="text-gray-600 mb-4">Correlation between {parameter1} and {parameter2} across marine ecosystems</p>
-                  <div className="bg-white rounded p-4 inline-block">
-                    <span className="text-2xl text-blue-600">r = 0.73</span>
-                    <p className="text-sm text-gray-600">Correlation Coefficient</p>
-                  </div>
-                </div>
-              </div>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={comparisonData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="param" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="hilsa" stroke="#06b6d4" strokeWidth={2} />
+                  <Line type="monotone" dataKey="mackerel" stroke="#0891b2" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </Card>
         );
       }
 
       if (ecologyType && ecologyType !== 'parameter-comparison') {
-        const parameterName = ecologyType.replace('-', ' ');
+        const paramName = ecologyType.replace('-', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         return (
           <Card>
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
                   <Activity className="h-6 w-6 mr-3 text-[#06b6d4]" />
-                  <h3 className="text-xl text-gray-900">{parameterName.charAt(0).toUpperCase() + parameterName.slice(1)} Analysis</h3>
+                  <h3 className="text-xl text-gray-900">{paramName} Analysis</h3>
                 </div>
                 <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Data
+                  <Download className="h-4 w-4 mr-2" />Export
                 </Button>
               </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
-                  <h4 className="text-lg mb-4 text-gray-900">{parameterName.charAt(0).toUpperCase() + parameterName.slice(1)} vs Species Distribution</h4>
-                  <div className="h-48 flex items-center justify-center">
-                    <div className="text-center">
-                      <TrendingUp className="h-16 w-16 text-[#06b6d4] mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Distribution Chart</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
-                  <h4 className="text-lg mb-4 text-gray-900">{parameterName.charAt(0).toUpperCase() + parameterName.slice(1)} vs Biomass</h4>
-                  <div className="h-48 flex items-center justify-center">
-                    <div className="text-center">
-                      <BarChart3 className="h-16 w-16 text-[#06b6d4] mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Biomass Correlation</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
-                  <h4 className="text-lg mb-4 text-gray-900">{parameterName.charAt(0).toUpperCase() + parameterName.slice(1)} Temporal Trends</h4>
-                  <div className="h-48 flex items-center justify-center">
-                    <div className="text-center">
-                      <Activity className="h-16 w-16 text-[#06b6d4] mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Time Series</p>
-                    </div>
-                  </div>
+                  <h4 className="text-lg mb-4 text-gray-900">{paramName} Distribution</h4>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={locationData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="location" angle={-45} textAnchor="end" height={100} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="density" fill="#06b6d4" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-                
                 <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
-                  <h4 className="text-lg mb-4 text-gray-900">{parameterName.charAt(0).toUpperCase() + parameterName.slice(1)} Spatial Distribution</h4>
-                  <div className="h-48 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="h-16 w-16 bg-gradient-to-r from-blue-500 to-red-500 rounded mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Heatmap</p>
-                    </div>
-                  </div>
+                  <h4 className="text-lg mb-4 text-gray-900">Temporal Trends</h4>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={trendsData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="year" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
+              </div>
+              <div className="mt-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
+                <h4 className="text-lg mb-4 text-gray-900">Biomass Correlation</h4>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={biomassData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="biomass" fill="#0891b2" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </Card>
@@ -899,7 +748,6 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
       }
     }
 
-    // Species-specific visualizations
     if (visualizationType === 'species') {
       return (
         <Card>
@@ -910,29 +758,67 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
                 <h3 className="text-xl text-gray-900">Species-Specific Analysis</h3>
               </div>
               <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Report
+                <Download className="h-4 w-4 mr-2" />Export
               </Button>
             </div>
-            
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-8 flex items-center justify-center min-h-96">
-              <div className="text-center">
-                <TrendingUp className="h-24 w-24 text-[#06b6d4] mx-auto mb-4" />
-                <h4 className="text-lg mb-2 text-gray-900">Species Analysis Dashboard</h4>
-                <p className="text-gray-600">Configure species selection from the filters to view population trends, migration patterns, and environmental responses</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
+                <h4 className="text-lg mb-4 text-gray-900">Population Trends</h4>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={trendsData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="year" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
+                <h4 className="text-lg mb-4 text-gray-900">Geographic Distribution</h4>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={locationData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="location" angle={-45} textAnchor="end" height={100} />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="density" fill="#0891b2" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
+              <h4 className="text-lg mb-4 text-gray-900">Species Composition</h4>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie 
+                    data={speciesData} 
+                    dataKey="count" 
+                    nameKey="name" 
+                    cx="50%" 
+                    cy="50%" 
+                    outerRadius={100} 
+                    label
+                  >
+                    {speciesData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </Card>
       );
     }
 
-    // Default fallback
     return (
-      <div className="flex items-center justify-center h-96 text-gray-500">
+      <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <p className="text-lg">Select specific visualization options to view content</p>
+          <p className="text-lg text-gray-500">Select visualization options</p>
         </div>
       </div>
     );
@@ -941,120 +827,94 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-        {/* Top Center Toggle */}
         <div className="flex justify-center mb-8">
-          <div className="bg-white rounded-full p-2 shadow-lg border border-gray-200">
+          <div className="bg-white rounded-full p-2 shadow-lg border">
             <div className="flex">
-              <button
-                onClick={() => { setPageMode('search'); resetFilters(); }}
-                className={`flex items-center px-8 py-3 rounded-full transition-all duration-200 ${
-                  pageMode === 'search'
-                    ? 'bg-[#06b6d4] text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Search className="h-5 w-5 mr-2" />
-                Search
-              </button>
-              <button
-                onClick={() => { setPageMode('visualization'); resetFilters(); }}
-                className={`flex items-center px-8 py-3 rounded-full transition-all duration-200 ${
-                  pageMode === 'visualization'
-                    ? 'bg-[#06b6d4] text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <BarChart3 className="h-5 w-5 mr-2" />
-                Visualization
-              </button>
+              {[
+                { mode: 'search' as PageMode, icon: Search, label: 'Search' },
+                { mode: 'visualization' as PageMode, icon: BarChart3, label: 'Visualization' }
+              ].map(item => (
+                <button 
+                  key={item.mode} 
+                  onClick={() => { setPageMode(item.mode); resetFilters(); }} 
+                  className={`flex items-center px-8 py-3 rounded-full transition-all ${
+                    pageMode === item.mode ? 'bg-[#06b6d4] text-white shadow-md' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <item.icon className="h-5 w-5 mr-2" />{item.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Right Data Source Toggle */}
         <div className="flex justify-end mb-8">
-          <div className="bg-white rounded-full p-1 shadow-md border border-gray-200">
+          <div className="bg-white rounded-full p-1 shadow-md border">
             <div className="flex">
-              <button
-                onClick={() => setDataSource('uploaded')}
-                className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${
-                  dataSource === 'uploaded'
-                    ? 'bg-[#1e3a8a] text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Uploaded Data
-              </button>
-              <button
-                onClick={() => setDataSource('platform')}
-                className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${
-                  dataSource === 'platform'
-                    ? 'bg-[#1e3a8a] text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Platform Data
-              </button>
-              <button
-                onClick={() => setDataSource('select')}
-                className={`px-4 py-2 rounded-full text-sm transition-all duration-200 ${
-                  dataSource === 'select'
-                    ? 'bg-[#1e3a8a] text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Select Source
-              </button>
+              {[
+                { src: 'uploaded' as DataSource, label: 'Uploaded Data' },
+                { src: 'platform' as DataSource, label: 'Platform Data' },
+                { src: 'select' as DataSource, label: 'Select Source' }
+              ].map(source => (
+                <button 
+                  key={source.src} 
+                  onClick={() => setDataSource(source.src)} 
+                  className={`px-4 py-2 rounded-full text-sm transition-all ${
+                    dataSource === source.src ? 'bg-[#1e3a8a] text-white' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {source.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Left Sidebar Filters */}
           <div className="lg:col-span-1">
             <Card className="sticky top-4 shadow-md">
               <div className="p-6">
                 <h3 className="text-lg mb-6 text-gray-900 flex items-center">
-                  <div className="w-2 h-2 bg-[#06b6d4] rounded-full mr-3"></div>
-                  Filters
+                  <div className="w-2 h-2 bg-[#06b6d4] rounded-full mr-3"></div>Filters
                 </h3>
-                
                 <div className="space-y-6">
-                  {/* Type Filter */}
                   <div>
-                    <Label className="text-base mb-3 block text-gray-700">Type</Label>
+                    <Label className="text-base mb-3 block">Type</Label>
                     {pageMode === 'search' ? (
                       <Select value={searchType} onValueChange={setSearchType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select type..." />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="otolith">Otolith</SelectItem>
-                          <SelectItem value="taxonomy">Taxonomy</SelectItem>
-                          <SelectItem value="edna">eDNA</SelectItem>
+                          {['otolith', 'taxonomy', 'edna'].map(type => (
+                            <SelectItem key={type} value={type}>
+                              {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     ) : (
                       <Select value={visualizationType} onValueChange={setVisualizationType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select type..." />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="simulation">Simulation</SelectItem>
-                          <SelectItem value="ecology">Ecology</SelectItem>
-                          <SelectItem value="species">Species-Specific</SelectItem>
+                          {['simulation', 'ecology', 'species'].map(type => (
+                            <SelectItem key={type} value={type}>
+                              {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     )}
                   </div>
 
-                  {/* Sub-type Filters */}
                   {pageMode === 'search' && searchType === 'otolith' && (
                     <div>
-                      <Label className="text-base mb-3 block text-gray-700">Otolith Type</Label>
+                      <Label className="text-base mb-3 block">Otolith Type</Label>
                       <Select value={otolithType} onValueChange={setOtolithType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select method..." />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="image">Image Based</SelectItem>
@@ -1066,13 +926,13 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
 
                   {pageMode === 'search' && searchType === 'taxonomy' && (
                     <div>
-                      <Label className="text-base mb-3 block text-gray-700">Search Method</Label>
+                      <Label className="text-base mb-3 block">Method</Label>
                       <Select value={taxonomyType} onValueChange={setTaxonomyType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select method..." />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="species">By Species Name</SelectItem>
+                          <SelectItem value="species">By Species</SelectItem>
                           <SelectItem value="class">By Classification</SelectItem>
                         </SelectContent>
                       </Select>
@@ -1081,14 +941,14 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
 
                   {pageMode === 'visualization' && visualizationType === 'simulation' && (
                     <div>
-                      <Label className="text-base mb-3 block text-gray-700">Simulation Type</Label>
+                      <Label className="text-base mb-3 block">Simulation</Label>
                       <Select value={simulationType} onValueChange={setSimulationType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select simulation..." />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="predictive">Predictive Visualization</SelectItem>
-                          <SelectItem value="comparison">Species Comparison</SelectItem>
+                          <SelectItem value="predictive">Predictive</SelectItem>
+                          <SelectItem value="comparison">Comparison</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1096,144 +956,77 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
 
                   {pageMode === 'visualization' && visualizationType === 'ecology' && (
                     <div>
-                      <Label className="text-base mb-3 block text-gray-700">Analysis Type</Label>
+                      <Label className="text-base mb-3 block">Analysis</Label>
                       <Select value={ecologyType} onValueChange={setEcologyType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select analysis..." />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="temperature">Temperature</SelectItem>
-                          <SelectItem value="salinity">Salinity</SelectItem>
-                          <SelectItem value="current-speed">Current Speed</SelectItem>
-                          <SelectItem value="depth">Depth</SelectItem>
-                          <SelectItem value="turbidity">Turbidity</SelectItem>
-                          <SelectItem value="parameter-comparison">Parameter 1 vs Parameter 2</SelectItem>
+                          {['temperature', 'salinity', 'current-speed', 'depth', 'turbidity', 'parameter-comparison'].map(type => (
+                            <SelectItem key={type} value={type}>
+                              {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                   )}
 
-                  {/* Parameter Selection for Parameter Comparison */}
                   {pageMode === 'visualization' && visualizationType === 'ecology' && ecologyType === 'parameter-comparison' && (
                     <>
-                      <div>
-                        <Label className="text-base mb-3 block text-gray-700">Parameter 1</Label>
-                        <Select value={parameter1} onValueChange={setParameter1}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select parameter 1..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="temperature">Temperature</SelectItem>
-                            <SelectItem value="salinity">Salinity</SelectItem>
-                            <SelectItem value="current-speed">Current Speed</SelectItem>
-                            <SelectItem value="depth">Depth</SelectItem>
-                            <SelectItem value="turbidity">Turbidity</SelectItem>
-                            <SelectItem value="ph">pH Level</SelectItem>
-                            <SelectItem value="oxygen">Dissolved Oxygen</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div>
-                        <Label className="text-base mb-3 block text-gray-700">Parameter 2</Label>
-                        <Select value={parameter2} onValueChange={setParameter2}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select parameter 2..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="temperature">Temperature</SelectItem>
-                            <SelectItem value="salinity">Salinity</SelectItem>
-                            <SelectItem value="current-speed">Current Speed</SelectItem>
-                            <SelectItem value="depth">Depth</SelectItem>
-                            <SelectItem value="turbidity">Turbidity</SelectItem>
-                            <SelectItem value="ph">pH Level</SelectItem>
-                            <SelectItem value="oxygen">Dissolved Oxygen</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {['parameter1', 'parameter2'].map((param, index) => (
+                        <div key={param}>
+                          <Label className="text-base mb-3 block">Parameter {index + 1}</Label>
+                          <Select 
+                            value={index === 0 ? parameter1 : parameter2} 
+                            onValueChange={index === 0 ? setParameter1 : setParameter2}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['temperature', 'salinity', 'depth', 'ph', 'oxygen'].map(type => (
+                                <SelectItem key={type} value={type}>
+                                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
                     </>
-                  )}
-
-                  {pageMode === 'visualization' && visualizationType === 'species' && (
-                    <div>
-                      <Label className="text-base mb-3 block text-gray-700">Species Analysis</Label>
-                      <Select value={speciesType} onValueChange={setSpeciesType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select analysis..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Species</SelectItem>
-                          <SelectItem value="specific">Specific Species</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Graph Type Filter (Visualization only) */}
-                  {pageMode === 'visualization' && (
-                    <div>
-                      <Label className="text-base mb-3 block text-gray-700">Graph Type</Label>
-                      <Select value={graphType} onValueChange={setGraphType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select graph..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="heatmap">Heatmap</SelectItem>
-                          <SelectItem value="timeseries">Time Series</SelectItem>
-                          <SelectItem value="bar">Bar Graph</SelectItem>
-                          <SelectItem value="pie">Pie Chart</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   )}
 
                   <Separator />
 
-                  {/* Location Filter */}
                   <div>
-                    <Label className="text-base mb-3 block text-gray-700">Location</Label>
+                    <Label className="text-base mb-3 block">Location</Label>
                     <Select value={location} onValueChange={setLocation}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select location..." />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="bay-of-bengal">Bay of Bengal</SelectItem>
-                        <SelectItem value="arabian-sea">Arabian Sea</SelectItem>
-                        <SelectItem value="indian-ocean">Indian Ocean</SelectItem>
-                        <SelectItem value="kerala-coast">Kerala Coast</SelectItem>
-                        <SelectItem value="tamil-nadu-coast">Tamil Nadu Coast</SelectItem>
-                        <SelectItem value="gujarat-coast">Gujarat Coast</SelectItem>
-                        <SelectItem value="west-bengal-coast">West Bengal Coast</SelectItem>
-                        <SelectItem value="odisha-coast">Odisha Coast</SelectItem>
-                        <SelectItem value="andhra-pradesh-coast">Andhra Pradesh Coast</SelectItem>
-                        <SelectItem value="karnataka-coast">Karnataka Coast</SelectItem>
-                        <SelectItem value="goa-coast">Goa Coast</SelectItem>
-                        <SelectItem value="maharashtra-coast">Maharashtra Coast</SelectItem>
-                        <SelectItem value="lakshadweep">Lakshadweep Waters</SelectItem>
-                        <SelectItem value="andaman-nicobar">Andaman & Nicobar Waters</SelectItem>
+                        {['Bay of Bengal', 'Arabian Sea', 'Indian Ocean', 'Kerala Coast'].map(loc => (
+                          <SelectItem key={loc} value={loc.toLowerCase().replace(/ /g, '-')}>
+                            {loc}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Time Filter */}
                   <div>
-                    <Label className="text-base mb-3 block text-gray-700">Time Period</Label>
+                    <Label className="text-base mb-3 block">Time Period</Label>
                     <Select value={timeFilter} onValueChange={setTimeFilter}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select period..." />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="last-month">Last Month</SelectItem>
-                        <SelectItem value="last-3-months">Last 3 Months</SelectItem>
-                        <SelectItem value="last-6-months">Last 6 Months</SelectItem>
-                        <SelectItem value="last-year">Last Year</SelectItem>
-                        <SelectItem value="last-2-years">Last 2 Years</SelectItem>
-                        <SelectItem value="last-5-years">Last 5 Years</SelectItem>
-                        <SelectItem value="monsoon-2024">Monsoon 2024</SelectItem>
-                        <SelectItem value="winter-2024">Winter 2024</SelectItem>
-                        <SelectItem value="summer-2024">Summer 2024</SelectItem>
-                        <SelectItem value="post-monsoon-2024">Post-Monsoon 2024</SelectItem>
-                        <SelectItem value="all-time">All Time Data</SelectItem>
+                        {['Last Month', 'Last 3 Months', 'Last Year', 'All Time'].map(period => (
+                          <SelectItem key={period} value={period.toLowerCase().replace(/ /g, '-')}>
+                            {period}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1242,7 +1035,6 @@ export function SearchVisualizationPage({ user }: SearchVisualizationPageProps) 
             </Card>
           </div>
 
-          {/* Central Content Area */}
           <div className="lg:col-span-4">
             {pageMode === 'search' ? renderSearchContent() : renderVisualizationContent()}
           </div>
