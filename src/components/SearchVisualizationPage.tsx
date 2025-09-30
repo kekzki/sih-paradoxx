@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,46 +22,63 @@ interface SearchVisualizationPageProps {
 type PageMode = 'search' | 'visualization';
 type DataSource = 'uploaded' | 'platform' | 'select';
 
-const speciesData = [
-  { name: "Hilsa", count: 120 },
-  { name: "Mackerel", count: 90 },
-  { name: "Pomfret", count: 70 },
-  { name: "Kingfish", count: 45 },
+// Expanded mock data with more variety
+const allSpeciesData = [
+  { name: "Hilsa", count: 120, location: "bay-of-bengal", timePeriod: "last-year", class: "actinopterygii", order: "clupeiformes", family: "clupeidae" },
+  { name: "Mackerel", count: 90, location: "arabian-sea", timePeriod: "last-year", class: "actinopterygii", order: "perciformes", family: "scombridae" },
+  { name: "Pomfret", count: 70, location: "bay-of-bengal", timePeriod: "last-3-months", class: "actinopterygii", order: "perciformes", family: "stromateidae" },
+  { name: "Kingfish", count: 45, location: "indian-ocean", timePeriod: "last-month", class: "actinopterygii", order: "perciformes", family: "scombridae" },
+  { name: "Tuna", count: 85, location: "arabian-sea", timePeriod: "last-year", class: "actinopterygii", order: "perciformes", family: "scombridae" },
+  { name: "Sardine", count: 110, location: "kerala-coast", timePeriod: "last-3-months", class: "actinopterygii", order: "clupeiformes", family: "clupeidae" },
 ];
 
-const biomassData = [
-  { month: "Jan", biomass: 1000 },
-  { month: "Feb", biomass: 1100 },
-  { month: "Mar", biomass: 950 },
-  { month: "Apr", biomass: 1150 },
-  { month: "May", biomass: 1300 },
-  { month: "Jun", biomass: 1250 },
+const allBiomassData = [
+  { month: "Jan", biomass: 1000, location: "bay-of-bengal", timePeriod: "last-year" },
+  { month: "Feb", biomass: 1100, location: "bay-of-bengal", timePeriod: "last-year" },
+  { month: "Mar", biomass: 950, location: "arabian-sea", timePeriod: "last-year" },
+  { month: "Apr", biomass: 1150, location: "arabian-sea", timePeriod: "last-year" },
+  { month: "May", biomass: 1300, location: "indian-ocean", timePeriod: "last-3-months" },
+  { month: "Jun", biomass: 1250, location: "indian-ocean", timePeriod: "last-3-months" },
+  { month: "Jul", biomass: 1400, location: "kerala-coast", timePeriod: "last-month" },
+  { month: "Aug", biomass: 1350, location: "kerala-coast", timePeriod: "last-month" },
 ];
 
-const trendsData = [
-  { year: 2020, value: 500 },
-  { year: 2021, value: 650 },
-  { year: 2022, value: 700 },
-  { year: 2023, value: 850 },
-  { year: 2024, value: 920 },
+const allTrendsData = [
+  { year: 2020, value: 500, location: "bay-of-bengal", parameter: "temperature" },
+  { year: 2021, value: 650, location: "bay-of-bengal", parameter: "temperature" },
+  { year: 2022, value: 700, location: "arabian-sea", parameter: "temperature" },
+  { year: 2023, value: 850, location: "arabian-sea", parameter: "temperature" },
+  { year: 2024, value: 920, location: "indian-ocean", parameter: "temperature" },
 ];
 
-const locationData = [
-  { location: "Bay of Bengal", density: 80 },
-  { location: "Arabian Sea", density: 60 },
-  { location: "Kerala", density: 45 },
-  { location: "Tamil Nadu", density: 70 },
+const allLocationData = [
+  { location: "Bay of Bengal", density: 80, timePeriod: "last-year" },
+  { location: "Arabian Sea", density: 60, timePeriod: "last-year" },
+  { location: "Kerala Coast", density: 45, timePeriod: "last-3-months" },
+  { location: "Tamil Nadu", density: 70, timePeriod: "last-3-months" },
+  { location: "Indian Ocean", density: 55, timePeriod: "last-month" },
 ];
 
-const comparisonData = [
-  { param: "10°C", hilsa: 30, mackerel: 45 },
-  { param: "15°C", hilsa: 55, mackerel: 70 },
-  { param: "20°C", hilsa: 85, mackerel: 90 },
-  { param: "25°C", hilsa: 75, mackerel: 65 },
-  { param: "30°C", hilsa: 40, mackerel: 35 },
+const allComparisonData = [
+  { param: "10°C", hilsa: 30, mackerel: 45, location: "bay-of-bengal", parameter1: "temperature", parameter2: "salinity" },
+  { param: "15°C", hilsa: 55, mackerel: 70, location: "bay-of-bengal", parameter1: "temperature", parameter2: "salinity" },
+  { param: "20°C", hilsa: 85, mackerel: 90, location: "arabian-sea", parameter1: "temperature", parameter2: "salinity" },
+  { param: "25°C", hilsa: 75, mackerel: 65, location: "arabian-sea", parameter1: "temperature", parameter2: "salinity" },
+  { param: "30°C", hilsa: 40, mackerel: 35, location: "indian-ocean", parameter1: "temperature", parameter2: "salinity" },
 ];
 
-const COLORS = ["#06b6d4", "#0891b2", "#0e7490", "#155e75"];
+// Searchable database
+const searchDatabase = [
+  { id: 'OTO001', name: 'Hilsa Fish', scientific: 'Tenualosa ilisha', location: 'Bay of Bengal', type: 'otolith', confidence: 94.2 },
+  { id: 'OTO002', name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', location: 'Arabian Sea', type: 'otolith', confidence: 87.8 },
+  { id: 'OTO003', name: 'Pomfret', scientific: 'Pampus argenteus', location: 'Bay of Bengal', type: 'otolith', confidence: 82.1 },
+  { id: 'DNA001', name: 'Tenualosa ilisha', scientific: 'Tenualosa ilisha', location: 'Bay of Bengal', type: 'edna', confidence: 96.8 },
+  { id: 'DNA002', name: 'Rastrelliger kanagurta', scientific: 'Rastrelliger kanagurta', location: 'Arabian Sea', type: 'edna', confidence: 91.4 },
+  { id: 'TAX001', name: 'Hilsa Fish', scientific: 'Tenualosa ilisha', location: 'Bay of Bengal', type: 'taxonomy', class: 'actinopterygii', order: 'clupeiformes', family: 'clupeidae' },
+  { id: 'TAX002', name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', location: 'Arabian Sea', type: 'taxonomy', class: 'actinopterygii', order: 'perciformes', family: 'scombridae' },
+];
+
+const COLORS = ["#06b6d4", "#0891b2", "#0e7490", "#155e75", "#164e63", "#0c4a6e"];
 
 export default function SearchVisualizationPage({ user }: SearchVisualizationPageProps) {
   const [pageMode, setPageMode] = useState<PageMode>('search');
@@ -90,6 +107,122 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
   const [phValue, setPhValue] = useState(8.1);
   const [oxygenValue, setOxygenValue] = useState(7.5);
 
+  // Filter data based on current selections
+  const filteredSpeciesData = useMemo(() => {
+    return allSpeciesData.filter(species => {
+      const locationMatch = !location || species.location === location;
+      const timeMatch = !timeFilter || species.timePeriod === timeFilter;
+      const classMatch = !selectedClass || species.class === selectedClass;
+      const orderMatch = !selectedOrder || species.order === selectedOrder;
+      const familyMatch = !selectedFamily || species.family === selectedFamily;
+      
+      return locationMatch && timeMatch && classMatch && orderMatch && familyMatch;
+    });
+  }, [location, timeFilter, selectedClass, selectedOrder, selectedFamily]);
+
+  const filteredBiomassData = useMemo(() => {
+    return allBiomassData.filter(data => {
+      const locationMatch = !location || data.location === location;
+      const timeMatch = !timeFilter || data.timePeriod === timeFilter;
+      return locationMatch && timeMatch;
+    });
+  }, [location, timeFilter]);
+
+  const filteredTrendsData = useMemo(() => {
+    return allTrendsData.filter(data => {
+      const locationMatch = !location || data.location === location;
+      const parameterMatch = !ecologyType || data.parameter === ecologyType;
+      return locationMatch && parameterMatch;
+    });
+  }, [location, ecologyType]);
+
+  const filteredLocationData = useMemo(() => {
+    return allLocationData.filter(data => {
+      const timeMatch = !timeFilter || data.timePeriod === timeFilter;
+      return timeMatch;
+    });
+  }, [timeFilter]);
+
+  const filteredComparisonData = useMemo(() => {
+    return allComparisonData.filter(data => {
+      const locationMatch = !location || data.location === location;
+      const param1Match = !parameter1 || data.parameter1 === parameter1;
+      const param2Match = !parameter2 || data.parameter2 === parameter2;
+      return locationMatch && param1Match && param2Match;
+    });
+  }, [location, parameter1, parameter2]);
+
+  // Search functionality
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    
+    const query = searchQuery.toLowerCase();
+    return searchDatabase.filter(item => 
+      item.name.toLowerCase().includes(query) ||
+      item.scientific.toLowerCase().includes(query) ||
+      item.location.toLowerCase().includes(query) ||
+      item.type.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  // Filter search results by type
+  const filteredSearchResults = useMemo(() => {
+    let results = searchResults;
+    
+    if (searchType === 'otolith') {
+      results = results.filter(item => item.type === 'otolith');
+    } else if (searchType === 'edna') {
+      results = results.filter(item => item.type === 'edna');
+    } else if (searchType === 'taxonomy') {
+      results = results.filter(item => item.type === 'taxonomy');
+    }
+    
+    if (location) {
+      results = results.filter(item => 
+        item.location.toLowerCase().includes(location.replace('-', ' '))
+      );
+    }
+    
+    return results;
+  }, [searchResults, searchType, location]);
+
+  // Data source handling
+  const getDataSourceData = useMemo(() => {
+    switch (dataSource) {
+      case 'uploaded':
+        // Return sample uploaded data (in real app, this would be user's data)
+        return {
+          speciesData: filteredSpeciesData.slice(0, 2), // Limited uploaded data
+          biomassData: filteredBiomassData.slice(0, 3),
+          trendsData: filteredTrendsData.slice(0, 2),
+        };
+      case 'platform':
+        // Return full platform data
+        return {
+          speciesData: filteredSpeciesData,
+          biomassData: filteredBiomassData,
+          trendsData: filteredTrendsData,
+          locationData: filteredLocationData,
+          comparisonData: filteredComparisonData,
+        };
+      case 'select':
+        // Return mixed data for demonstration
+        return {
+          speciesData: filteredSpeciesData.filter((_, i) => i % 2 === 0),
+          biomassData: filteredBiomassData.filter((_, i) => i % 2 === 0),
+          trendsData: filteredTrendsData.filter((_, i) => i % 2 === 0),
+        };
+      default:
+        return {
+          speciesData: filteredSpeciesData,
+          biomassData: filteredBiomassData,
+          trendsData: filteredTrendsData,
+          locationData: filteredLocationData,
+          comparisonData: filteredComparisonData,
+        };
+    }
+  }, [dataSource, filteredSpeciesData, filteredBiomassData, filteredTrendsData, filteredLocationData, filteredComparisonData]);
+
   const calculateSurvival = () => {
     const tempScore = Math.max(0, 100 - Math.abs(tempValue - 25) * 2);
     const salinityScore = Math.max(0, 100 - Math.abs(salinityValue - 35) * 1.5);
@@ -115,6 +248,9 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
     setVisualizeQuery('');
     setParameter1('');
     setParameter2('');
+    setSelectedClass('');
+    setSelectedOrder('');
+    setSelectedFamily('');
   };
 
   const renderSearchContent = () => {
@@ -137,9 +273,31 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                 <Search className="h-4 w-4" />
               </Button>
             </div>
-            {searchQuery && (
+            {searchQuery && filteredSearchResults.length > 0 && (
+              <div className="mt-8 max-w-2xl mx-auto">
+                <Card>
+                  <div className="p-6">
+                    <h3 className="text-xl mb-4 text-gray-900">Search Results ({filteredSearchResults.length})</h3>
+                    <div className="space-y-3">
+                      {filteredSearchResults.map((result, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                          <div>
+                            <h4 className="text-base font-medium text-gray-900">{result.name}</h4>
+                            <p className="text-sm text-gray-600">Scientific: {result.scientific}</p>
+                            <p className="text-sm text-gray-600">Location: {result.location}</p>
+                            <Badge variant="secondary" className="mt-1">{result.type}</Badge>
+                          </div>
+                          <Button variant="outline" size="sm">View Details</Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+            {searchQuery && filteredSearchResults.length === 0 && (
               <div className="mt-8 p-6 bg-blue-50 rounded-xl max-w-2xl mx-auto">
-                <p className="text-sm text-gray-600 text-center">For more specific searches, use the filters on the left</p>
+                <p className="text-sm text-gray-600 text-center">No results found. Try different search terms or use the filters.</p>
               </div>
             )}
           </div>
@@ -197,28 +355,27 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        {['ID', 'Name', 'Confidence', 'Action'].map(header => (
+                        {['ID', 'Name', 'Confidence', 'Location', 'Action'].map(header => (
                           <th key={header} className="px-6 py-3 text-left text-xs uppercase tracking-wider text-gray-500">{header}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {[
-                        { id: 'OTO001', name: 'Hilsa Fish', confidence: 94.2 },
-                        { id: 'OTO002', name: 'Indian Mackerel', confidence: 87.8 },
-                        { id: 'OTO003', name: 'Pomfret', confidence: 82.1 }
-                      ].map((result, index) => (
+                      {filteredSearchResults
+                        .filter(item => item.type === 'otolith')
+                        .map((result, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">{result.id}</td>
                           <td className="px-6 py-4 text-sm text-gray-900">{result.name}</td>
                           <td className="px-6 py-4">
                             <Badge 
                               variant="secondary" 
-                              className={result.confidence > 90 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
+                              className={result.confidence! > 90 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
                             >
                               {result.confidence}%
                             </Badge>
                           </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{result.location}</td>
                           <td className="px-6 py-4">
                             <Button variant="outline" size="sm" className="text-[#06b6d4] border-[#06b6d4]">View</Button>
                           </td>
@@ -227,6 +384,11 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                     </tbody>
                   </table>
                 </div>
+                {filteredSearchResults.filter(item => item.type === 'otolith').length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No otolith results found with current filters.
+                  </div>
+                )}
               </div>
             </Card>
           )}
@@ -259,22 +421,25 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
           {searchQuery && (
             <Card>
               <div className="p-6">
-                <h3 className="text-xl mb-6 text-gray-900">Search Results</h3>
+                <h3 className="text-xl mb-6 text-gray-900">Search Results ({filteredSearchResults.length})</h3>
                 <div className="grid gap-4">
-                  {[
-                    { name: 'Hilsa Fish', scientific: 'Tenualosa ilisha', location: 'Bay of Bengal' },
-                    { name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', location: 'Arabian Sea' }
-                  ].map((fish, index) => (
+                  {filteredSearchResults.map((fish, index) => (
                     <div key={index} className="flex items-center p-4 border rounded-lg hover:bg-gray-50">
                       <div className="flex-1">
                         <h4 className="text-base mb-1 text-gray-900">{fish.name}</h4>
                         <p className="text-sm text-gray-600">Scientific: {fish.scientific}</p>
                         <p className="text-sm text-gray-600">Location: {fish.location}</p>
+                        <Badge variant="secondary" className="mt-1">{fish.type}</Badge>
                       </div>
                       <Button variant="outline" size="sm">View</Button>
                     </div>
                   ))}
                 </div>
+                {filteredSearchResults.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No results found for "{searchQuery}" with current filters.
+                  </div>
+                )}
               </div>
             </Card>
           )}
@@ -311,17 +476,19 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                 <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg mb-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <h4 className="text-lg mb-3 text-gray-900">Hilsa Fish</h4>
+                      <h4 className="text-lg mb-3 text-gray-900">{getDataSourceData.speciesData[0]?.name || 'Hilsa Fish'}</h4>
                       <div className="space-y-2 text-sm">
                         <p><span className="text-gray-600">Scientific:</span> Tenualosa ilisha</p>
                         <p><span className="text-gray-600">Family:</span> Clupeidae</p>
+                        <p><span className="text-gray-600">Location:</span> {location || 'Bay of Bengal'}</p>
                       </div>
                     </div>
                     <div>
                       <h4 className="text-lg mb-3 text-gray-900">Distribution</h4>
                       <div className="space-y-2 text-sm">
-                        <p><span className="text-gray-600">Habitat:</span> Bay of Bengal</p>
+                        <p><span className="text-gray-600">Habitat:</span> Marine/Brackish</p>
                         <p><span className="text-gray-600">Status:</span> Commercial</p>
+                        <p><span className="text-gray-600">Records:</span> {getDataSourceData.speciesData[0]?.count || 120}</p>
                       </div>
                     </div>
                   </div>
@@ -330,7 +497,7 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie 
-                      data={speciesData} 
+                      data={getDataSourceData.speciesData} 
                       dataKey="count" 
                       nameKey="name" 
                       cx="50%" 
@@ -338,7 +505,7 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                       outerRadius={100} 
                       label
                     >
-                      {speciesData.map((entry, index) => (
+                      {getDataSourceData.speciesData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -346,6 +513,11 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+                {getDataSourceData.speciesData.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No species data available with current filters.
+                  </div>
+                )}
               </div>
             </Card>
           )}
@@ -354,6 +526,13 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
     }
 
     if (searchType === 'taxonomy' && taxonomyType === 'class') {
+      const classificationResults = searchDatabase.filter(item => 
+        item.type === 'taxonomy' &&
+        (!selectedClass || (item as any).class === selectedClass) &&
+        (!selectedOrder || (item as any).order === selectedOrder) &&
+        (!selectedFamily || (item as any).family === selectedFamily)
+      );
+
       return (
         <div className="space-y-6">
           <Card>
@@ -394,10 +573,10 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                   <h3 className="text-xl mb-6 text-gray-900">Statistics</h3>
                   <div className="grid grid-cols-4 gap-4">
                     {[
-                      { value: '2,847', label: 'Total Records' },
-                      { value: '156', label: 'Species' },
-                      { value: '23', label: 'Families' },
-                      { value: '8', label: 'Orders' }
+                      { value: classificationResults.length.toString(), label: 'Matching Species' },
+                      { value: getDataSourceData.speciesData.reduce((sum, species) => sum + species.count, 0).toString(), label: 'Total Records' },
+                      { value: new Set(getDataSourceData.speciesData.map(s => s.family)).size.toString(), label: 'Families' },
+                      { value: new Set(getDataSourceData.speciesData.map(s => s.order)).size.toString(), label: 'Orders' }
                     ].map((stat, index) => (
                       <div key={index} className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
                         <div className="text-3xl text-[#1e3a8a] mb-2">{stat.value}</div>
@@ -409,23 +588,32 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
               </Card>
               <Card>
                 <div className="p-6">
-                  <h3 className="text-xl mb-6 text-gray-900">Matching Records</h3>
+                  <h3 className="text-xl mb-6 text-gray-900">Matching Records ({classificationResults.length})</h3>
                   <div className="space-y-3">
-                    {[
-                      { name: 'Hilsa Fish', scientific: 'Tenualosa ilisha', records: 45 },
-                      { name: 'Indian Mackerel', scientific: 'Rastrelliger kanagurta', records: 38 }
-                    ].map((species, index) => (
+                    {classificationResults.map((species, index) => (
                       <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                         <div>
                           <h4 className="text-base text-gray-900">{species.name}</h4>
                           <p className="text-sm text-gray-600">{species.scientific}</p>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline">{(species as any).class}</Badge>
+                            <Badge variant="outline">{(species as any).order}</Badge>
+                            <Badge variant="outline">{(species as any).family}</Badge>
+                          </div>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <Badge variant="secondary">{species.records} records</Badge>
+                          <Badge variant="secondary">
+                            {getDataSourceData.speciesData.find(s => s.name.toLowerCase().includes(species.name.toLowerCase()))?.count || 0} records
+                          </Badge>
                           <Button variant="outline" size="sm">View</Button>
                         </div>
                       </div>
                     ))}
+                    {classificationResults.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        No classification results found with current filters.
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -436,6 +624,11 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
     }
 
     if (searchType === 'edna') {
+      const ednaResults = searchDatabase.filter(item => 
+        item.type === 'edna' &&
+        (!location || item.location.toLowerCase().includes(location.replace('-', ' ')))
+      );
+
       return (
         <div className="space-y-6">
           {!ednaUploadedFile ? (
@@ -485,16 +678,13 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        {['ID', 'Species', 'Confidence', 'Action'].map(header => (
+                        {['ID', 'Species', 'Confidence', 'Location', 'Action'].map(header => (
                           <th key={header} className="px-6 py-3 text-left text-xs uppercase text-gray-500">{header}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {[
-                        { id: 'DNA001', name: 'Tenualosa ilisha', confidence: 96.8 },
-                        { id: 'DNA002', name: 'Rastrelliger kanagurta', confidence: 91.4 }
-                      ].map((result, index) => (
+                      {ednaResults.map((result, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm text-gray-900">{result.id}</td>
                           <td className="px-6 py-4 text-sm text-gray-900">{result.name}</td>
@@ -503,6 +693,7 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                               {result.confidence}%
                             </Badge>
                           </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{result.location}</td>
                           <td className="px-6 py-4">
                             <Button variant="outline" size="sm" className="text-[#06b6d4] border-[#06b6d4]">View</Button>
                           </td>
@@ -510,6 +701,11 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                       ))}
                     </tbody>
                   </table>
+                  {ednaResults.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No eDNA results found with current filters.
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -518,7 +714,14 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
       );
     }
 
-    return null;
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <Search className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+          <p className="text-lg text-gray-500">Select search options from the filters</p>
+        </div>
+      </div>
+    );
   };
 
   const renderVisualizationContent = () => {
@@ -543,7 +746,9 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
             </div>
             {visualizeQuery && (
               <div className="mt-8 p-6 bg-blue-50 rounded-xl max-w-2xl mx-auto">
-                <p className="text-sm text-gray-600 text-center">For advanced visualizations, use the filters</p>
+                <p className="text-sm text-gray-600 text-center">
+                  Data Source: {dataSource} | {getDataSourceData.speciesData.length} species | {getDataSourceData.biomassData.length} time points
+                </p>
               </div>
             )}
           </div>
@@ -560,9 +765,12 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                 <Sliders className="h-6 w-6 mr-3 text-[#06b6d4]" />
                 <h3 className="text-xl text-gray-900">Predictive Visualization</h3>
               </div>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />Export
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline">Data: {dataSource}</Badge>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />Export
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
@@ -593,6 +801,7 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                 <div className="text-center mb-6">
                   <TrendingUp className="h-16 w-16 text-[#06b6d4] mx-auto mb-4" />
                   <h4 className="text-lg mb-2 text-gray-900">Survival Prediction</h4>
+                  <p className="text-sm text-gray-600">Based on {getDataSourceData.speciesData.length} species</p>
                 </div>
                 <div className="bg-white rounded p-6 w-full max-w-sm">
                   <div className="text-center">
@@ -600,7 +809,7 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                     <p className="text-sm text-gray-600 mt-2">Predicted Survival Rate</p>
                   </div>
                   <ResponsiveContainer width="100%" height={150} className="mt-4">
-                    <LineChart data={biomassData.slice(0, 4)}>
+                    <LineChart data={getDataSourceData.biomassData.slice(0, 6)}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis hide />
@@ -625,21 +834,31 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                 <Activity className="h-6 w-6 mr-3 text-[#06b6d4]" />
                 <h3 className="text-xl text-gray-900">Species Comparison</h3>
               </div>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />Export
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline">Data: {dataSource}</Badge>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />Export
+                </Button>
+              </div>
             </div>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={comparisonData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="param" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="hilsa" fill="#06b6d4" name="Hilsa" />
-                <Bar dataKey="mackerel" fill="#0891b2" name="Mackerel" />
-              </BarChart>
-            </ResponsiveContainer>
+            {getDataSourceData.comparisonData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={getDataSourceData.comparisonData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="param" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="hilsa" fill="#06b6d4" name="Hilsa" />
+                  <Bar dataKey="mackerel" fill="#0891b2" name="Mackerel" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center py-16 text-gray-500">
+                <Activity className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p>No comparison data available with current filters.</p>
+              </div>
+            )}
           </div>
         </Card>
       );
@@ -669,21 +888,31 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                   <Activity className="h-6 w-6 mr-3 text-[#06b6d4]" />
                   <h3 className="text-xl text-gray-900">{parameter1} vs {parameter2}</h3>
                 </div>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />Export
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline">Data: {dataSource}</Badge>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />Export
+                  </Button>
+                </div>
               </div>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={comparisonData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="param" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="hilsa" stroke="#06b6d4" strokeWidth={2} />
-                  <Line type="monotone" dataKey="mackerel" stroke="#0891b2" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              {getDataSourceData.comparisonData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={getDataSourceData.comparisonData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="param" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="hilsa" stroke="#06b6d4" strokeWidth={2} />
+                    <Line type="monotone" dataKey="mackerel" stroke="#0891b2" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-16 text-gray-500">
+                  <Activity className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p>No comparison data available for {parameter1} vs {parameter2} with current filters.</p>
+                </div>
+              )}
             </div>
           </Card>
         );
@@ -699,48 +928,69 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                   <Activity className="h-6 w-6 mr-3 text-[#06b6d4]" />
                   <h3 className="text-xl text-gray-900">{paramName} Analysis</h3>
                 </div>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />Export
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline">Data: {dataSource}</Badge>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />Export
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
                   <h4 className="text-lg mb-4 text-gray-900">{paramName} Distribution</h4>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={locationData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="location" angle={-45} textAnchor="end" height={100} />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="density" fill="#06b6d4" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {getDataSourceData.locationData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={getDataSourceData.locationData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="location" angle={-45} textAnchor="end" height={100} />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="density" fill="#06b6d4" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No location data available.
+                    </div>
+                  )}
                 </div>
                 <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
                   <h4 className="text-lg mb-4 text-gray-900">Temporal Trends</h4>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={trendsData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="year" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {getDataSourceData.trendsData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <LineChart data={getDataSourceData.trendsData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="year" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No trends data available.
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="mt-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
                 <h4 className="text-lg mb-4 text-gray-900">Biomass Correlation</h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={biomassData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="biomass" fill="#0891b2" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {getDataSourceData.biomassData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={getDataSourceData.biomassData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="biomass" fill="#0891b2" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No biomass data available with current filters.
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -757,57 +1007,78 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
                 <Database className="h-6 w-6 mr-3 text-[#06b6d4]" />
                 <h3 className="text-xl text-gray-900">Species-Specific Analysis</h3>
               </div>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />Export
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline">Data: {dataSource}</Badge>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />Export
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
                 <h4 className="text-lg mb-4 text-gray-900">Population Trends</h4>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={trendsData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {getDataSourceData.trendsData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={getDataSourceData.trendsData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="year" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No trends data available.
+                  </div>
+                )}
               </div>
               <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
                 <h4 className="text-lg mb-4 text-gray-900">Geographic Distribution</h4>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={locationData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="location" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="density" fill="#0891b2" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {getDataSourceData.locationData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={getDataSourceData.locationData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="location" angle={-45} textAnchor="end" height={100} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="density" fill="#0891b2" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No location data available.
+                  </div>
+                )}
               </div>
             </div>
             <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
               <h4 className="text-lg mb-4 text-gray-900">Species Composition</h4>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie 
-                    data={speciesData} 
-                    dataKey="count" 
-                    nameKey="name" 
-                    cx="50%" 
-                    cy="50%" 
-                    outerRadius={100} 
-                    label
-                  >
-                    {speciesData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {getDataSourceData.speciesData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie 
+                      data={getDataSourceData.speciesData} 
+                      dataKey="count" 
+                      nameKey="name" 
+                      cx="50%" 
+                      cy="50%" 
+                      outerRadius={100} 
+                      label
+                    >
+                      {getDataSourceData.speciesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No species data available with current filters.
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -818,7 +1089,7 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <p className="text-lg text-gray-500">Select visualization options</p>
+          <p className="text-lg text-gray-500">Select visualization options from the filters</p>
         </div>
       </div>
     );
@@ -848,7 +1119,17 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
           </div>
         </div>
 
-        <div className="flex justify-end mb-8">
+        <div className="flex justify-between mb-8">
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              {dataSource.toUpperCase()} DATA
+            </Badge>
+            {(location || timeFilter) && (
+              <Badge variant="outline" className="text-gray-600">
+                Filters: {location ? `${location} ` : ''}{timeFilter ? `${timeFilter}` : ''}
+              </Badge>
+            )}
+          </div>
           <div className="bg-white rounded-full p-1 shadow-md border">
             <div className="flex">
               {[
@@ -874,9 +1155,19 @@ export default function SearchVisualizationPage({ user }: SearchVisualizationPag
           <div className="lg:col-span-1">
             <Card className="sticky top-4 shadow-md">
               <div className="p-6">
-                <h3 className="text-lg mb-6 text-gray-900 flex items-center">
-                  <div className="w-2 h-2 bg-[#06b6d4] rounded-full mr-3"></div>Filters
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg text-gray-900 flex items-center">
+                    <div className="w-2 h-2 bg-[#06b6d4] rounded-full mr-3"></div>Filters
+                  </h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={resetFilters}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Reset
+                  </Button>
+                </div>
                 <div className="space-y-6">
                   <div>
                     <Label className="text-base mb-3 block">Type</Label>
